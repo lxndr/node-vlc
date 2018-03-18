@@ -1,0 +1,136 @@
+#include "util.h"
+#include "media.h"
+#include "media-player.h"
+
+static Nan::Persistent<v8::Function> constructor;
+
+
+void MediaPlayer::Init(v8::Local<v8::Object> exports, libvlc_instance_t* vlc) {
+  auto data = Nan::New<v8::External>(static_cast<void*>(vlc));
+  auto tpl = Nan::New<v8::FunctionTemplate>(New, data);
+  tpl->SetClassName(Nan::New("VlcMediaPlayer").ToLocalChecked());
+  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+
+  Nan::SetPrototypeMethod(tpl, "play", Play);
+  Nan::SetPrototypeMethod(tpl, "pause", Pause);
+  Nan::SetPrototypeMethod(tpl, "stop", Stop);
+  Nan::SetPrototypeMethod(tpl, "close", Close);
+
+  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("media").ToLocalChecked(), MediaGetter, MediaSetter);
+  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("length").ToLocalChecked(), LengthGetter);
+  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("time").ToLocalChecked(), TimeGetter, TimeSetter);
+  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("position").ToLocalChecked(), PositionGetter, PositionSetter);
+  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("state").ToLocalChecked(), StateGetter);
+
+  constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
+  Nan::Set(exports, Nan::New("VlcMediaPlayer").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
+}
+
+
+NAN_METHOD(MediaPlayer::New) {
+  auto vlc = static_cast<libvlc_instance_t*>(info.Data().As<v8::External>()->Value());
+
+  if (info.IsConstructCall()) {
+    auto self = new MediaPlayer(vlc);
+    self->Wrap(info.This());
+
+    if (info.Length() > 0) {
+      auto media = info[0]->ToObject();
+      self->SetMedia(media);
+    }
+
+    info.GetReturnValue().Set(info.This());
+  } else {
+    Nan::ThrowTypeError("Called as plain function is not permitted");
+  }
+}
+
+
+MediaPlayer::MediaPlayer(libvlc_instance_t* vlc) {
+  m_vlc_player = libvlc_media_player_new(vlc);
+  auto em = libvlc_media_player_event_manager(m_vlc_player);
+  SetupEventCallbacks(em);
+}
+
+void MediaPlayer::Destroy() {
+  EventManager::Destroy();
+  libvlc_media_player_stop(m_vlc_player);
+  libvlc_media_player_release(m_vlc_player);
+}
+
+void MediaPlayer::SetMedia(v8::Local<v8::Object> object) {
+  m_media.Reset(object);
+  auto _media = Nan::ObjectWrap::Unwrap<Media>(object);
+  libvlc_media_player_set_media(m_vlc_player, _media->GetVlcMedia());
+}
+
+
+NAN_METHOD(MediaPlayer::Play) {
+  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+  libvlc_media_player_play(self->m_vlc_player);
+}
+
+NAN_METHOD(MediaPlayer::Pause) {
+  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+  libvlc_media_player_pause(self->m_vlc_player);
+}
+
+NAN_METHOD(MediaPlayer::Stop) {
+  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+  libvlc_media_player_stop(self->m_vlc_player);
+}
+
+NAN_METHOD(MediaPlayer::Close) {
+  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+  self->Destroy();
+}
+
+
+NAN_GETTER(MediaPlayer::MediaGetter) {
+  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+  info.GetReturnValue().Set(Nan::New(self->m_media));
+}
+
+NAN_SETTER(MediaPlayer::MediaSetter) {
+  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+  self->SetMedia(value->ToObject());
+  info.GetReturnValue().Set(true);
+}
+
+NAN_GETTER(MediaPlayer::LengthGetter) {
+  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+  auto length = libvlc_media_player_get_length(self->m_vlc_player);
+  info.GetReturnValue().Set(static_cast<int32_t>(length));
+}
+
+NAN_GETTER(MediaPlayer::TimeGetter) {
+  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+  auto time = libvlc_media_player_get_time(self->m_vlc_player);
+  info.GetReturnValue().Set(static_cast<int32_t>(time));
+}
+
+NAN_SETTER(MediaPlayer::TimeSetter) {
+  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+  libvlc_media_player_set_time(self->m_vlc_player, value->NumberValue());
+  info.GetReturnValue().Set(true);
+}
+
+NAN_GETTER(MediaPlayer::PositionGetter) {
+  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+  auto pos = libvlc_media_player_get_position(self->m_vlc_player);
+  info.GetReturnValue().Set(pos);
+}
+
+NAN_SETTER(MediaPlayer::PositionSetter) {
+  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+  auto pos = value->NumberValue();
+  libvlc_media_player_set_position(self->m_vlc_player, pos);
+  info.GetReturnValue().Set(true);
+}
+
+NAN_GETTER(MediaPlayer::StateGetter) {
+  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+  auto state = libvlc_media_player_get_state(self->m_vlc_player);
+  auto val = vlc_state_to_string(state);
+  info.GetReturnValue().Set(Nan::New(val).ToLocalChecked());
+}
