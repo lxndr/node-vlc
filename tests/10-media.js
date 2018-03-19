@@ -1,5 +1,4 @@
 const path = require('path');
-const {EventEmitter} = require('events');
 const {expect} = require('chai');
 const {VlcMedia} = require('..');
 
@@ -10,10 +9,6 @@ describe('VlcMedia', () => {
 
   it ('creates new', () => {
     media = new VlcMedia(fname);
-  });
-
-  it('inherits EventEmitter', () => {
-    expect(media instanceof EventEmitter).to.be.true;
   });
 
   after(() => {

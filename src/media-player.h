@@ -9,10 +9,11 @@ class MediaPlayer : public EventManager {
 public:
   static v8::Local<v8::Function> Init();
   void SetMedia(v8::Local<v8::Object> media);
+  void Close() override;
 
 private:
   explicit MediaPlayer(libvlc_instance_t* vlc);
-  void Destroy();
+  libvlc_event_manager_t* GetVlcEventManager() const override;
 
   static NAN_METHOD(New);
   static NAN_METHOD(Play);

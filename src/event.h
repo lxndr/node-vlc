@@ -10,22 +10,29 @@ struct Event {
   virtual v8::Local<v8::Value> value() const;
 };
 
-struct BufferingEvent : Event {
+struct BufferEvent : Event {
   float cache;
 
   static Event* create(const libvlc_event_t* event);
   v8::Local<v8::Value> value() const override;
 };
 
-struct TimeChangedEvent : Event {
+struct TimeChangeEvent : Event {
   libvlc_time_t time;
 
   static Event* create(const libvlc_event_t* event);
   v8::Local<v8::Value> value() const override;
 };
 
-struct PositionChangedEvent : Event {
+struct PositionChangeEvent : Event {
   float position;
+
+  static Event* create(const libvlc_event_t* event);
+  v8::Local<v8::Value> value() const override;
+};
+
+struct MetaChangeEvent : Event {
+  int type;
 
   static Event* create(const libvlc_event_t* event);
   v8::Local<v8::Value> value() const override;

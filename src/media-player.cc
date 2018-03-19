@@ -1,9 +1,12 @@
 #include "core.h"
 #include "media.h"
 #include "media-player.h"
-#include "util.h"
 
 static Nan::Persistent<v8::Function> constructor;
+static const std::vector<std::string> availableEvents = {
+  "onopen", "onbuffer", "onplay", "onpause", "onstop",
+  "ontime", "onposition", "onend", "onerror"
+};
 
 
 v8::Local<v8::Function> MediaPlayer::Init() {
@@ -22,6 +25,8 @@ v8::Local<v8::Function> MediaPlayer::Init() {
   Nan::SetAccessor(inst, Nan::New("time").ToLocalChecked(), TimeGetter, TimeSetter);
   Nan::SetAccessor(inst, Nan::New("position").ToLocalChecked(), PositionGetter, PositionSetter);
   Nan::SetAccessor(inst, Nan::New("state").ToLocalChecked(), StateGetter);
+
+  EventManager::Init(tpl, availableEvents);
 
   constructor.Reset(tpl->GetFunction());
   return tpl->GetFunction();
@@ -45,14 +50,16 @@ NAN_METHOD(MediaPlayer::New) {
 }
 
 
-MediaPlayer::MediaPlayer(libvlc_instance_t* vlc) {
+MediaPlayer::MediaPlayer(libvlc_instance_t* vlc) : EventManager(availableEvents) {
   m_vlc_player = libvlc_media_player_new(vlc);
-  auto em = libvlc_media_player_event_manager(m_vlc_player);
-  SetupEventCallbacks(em);
 }
 
-void MediaPlayer::Destroy() {
-  EventManager::Destroy();
+libvlc_event_manager_t* MediaPlayer::GetVlcEventManager() const {
+  return libvlc_media_player_event_manager(m_vlc_player);
+}
+
+void MediaPlayer::Close() {
+  EventManager::Close();
   libvlc_media_player_stop(m_vlc_player);
   libvlc_media_player_release(m_vlc_player);
 }
@@ -81,7 +88,7 @@ NAN_METHOD(MediaPlayer::Stop) {
 
 NAN_METHOD(MediaPlayer::Close) {
   auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
-  self->Destroy();
+  self->Close();
 }
 
 
@@ -110,7 +117,7 @@ NAN_GETTER(MediaPlayer::TimeGetter) {
 
 NAN_SETTER(MediaPlayer::TimeSetter) {
   auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
-  libvlc_media_player_set_time(self->m_vlc_player, value->NumberValue());
+  libvlc_media_player_set_time(self->m_vlc_player, value->IntegerValue());
   info.GetReturnValue().Set(true);
 }
 
@@ -122,7 +129,7 @@ NAN_GETTER(MediaPlayer::PositionGetter) {
 
 NAN_SETTER(MediaPlayer::PositionSetter) {
   auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
-  auto pos = value->NumberValue();
+  auto pos = value->IntegerValue();
   libvlc_media_player_set_position(self->m_vlc_player, pos);
   info.GetReturnValue().Set(true);
 }
@@ -130,6 +137,5 @@ NAN_SETTER(MediaPlayer::PositionSetter) {
 NAN_GETTER(MediaPlayer::StateGetter) {
   auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
   auto state = libvlc_media_player_get_state(self->m_vlc_player);
-  auto val = vlc_state_to_string(state);
-  info.GetReturnValue().Set(Nan::New(val).ToLocalChecked());
+  info.GetReturnValue().Set(state);
 }

@@ -2,15 +2,24 @@
 #include "media.h"
 
 static Nan::Persistent<v8::Function> constructor;
+static const std::vector<std::string> availableEvents = {
+  "onmeta", "onduration"
+};
+
 
 v8::Local<v8::Function> Media::Init() {
   auto tpl = Nan::New<v8::FunctionTemplate>(New);
   tpl->SetClassName(Nan::New("VlcMedia").ToLocalChecked());
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
+  Nan::SetPrototypeMethod(tpl, "close", Close);
+  Nan::SetPrototypeMethod(tpl, "getMeta", GetMeta);
+
   auto inst = tpl->InstanceTemplate();
   Nan::SetAccessor(inst, Nan::New("mrl").ToLocalChecked(), MrlGetter);
   Nan::SetAccessor(inst, Nan::New("duration").ToLocalChecked(), DurationGetter);
+
+  EventManager::Init(tpl, availableEvents);
 
   constructor.Reset(tpl->GetFunction());
   return tpl->GetFunction();
@@ -40,24 +49,51 @@ NAN_METHOD(Media::New) {
 }
 
 
-Media::Media(libvlc_instance_t* vlc, const char* mrl) {
+Media::Media(libvlc_instance_t* vlc, const char* mrl) : EventManager(availableEvents) {
   m_vlc_media = libvlc_media_new_location(vlc, mrl);
 }
 
-Media::~Media() {
+libvlc_event_manager_t* Media::GetVlcEventManager() const {
+  return libvlc_media_event_manager(m_vlc_media);
+}
+
+void Media::Close() {
+  EventManager::Close();
   libvlc_media_release(m_vlc_media);
+}
+
+NAN_METHOD(Media::Close) {
+  auto self = Nan::ObjectWrap::Unwrap<Media>(info.Holder());
+  self->Close();
+}
+
+NAN_METHOD(Media::GetMeta) {
+  if (!(info.Length() >= 1 && info[0]->IsNumber())) {
+    Nan::ThrowTypeError("Argument #1 must be a number");
+    return;
+  }
+
+  auto self = Nan::ObjectWrap::Unwrap<Media>(info.Holder());
+  auto type = info[0]->Int32Value();
+  auto meta = libvlc_media_get_meta(self->m_vlc_media, (libvlc_meta_t) type);
+
+  if (meta) {
+    info.GetReturnValue().Set(Nan::New((const char*) meta).ToLocalChecked());
+    libvlc_free(meta);
+  } else {
+    info.GetReturnValue().SetNull();
+  }
 }
 
 NAN_GETTER(Media::MrlGetter) {
   auto self = Nan::ObjectWrap::Unwrap<Media>(info.Holder());
   auto mrl = libvlc_media_get_mrl(self->m_vlc_media);
   info.GetReturnValue().Set(Nan::New((const char*) mrl).ToLocalChecked());
-  free(mrl);
+  libvlc_free(mrl);
 }
 
 NAN_GETTER(Media::DurationGetter) {
   auto self = Nan::ObjectWrap::Unwrap<Media>(info.Holder());
   auto val = libvlc_media_get_duration(self->m_vlc_media);
-  auto ret = (double) val / 1000.0;
-  info.GetReturnValue().Set(Nan::New(ret));
+  info.GetReturnValue().Set((int32_t) val);
 }
