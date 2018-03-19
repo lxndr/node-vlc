@@ -1,24 +1,23 @@
+#include "core.h"
 #include "media.h"
 
 static Nan::Persistent<v8::Function> constructor;
 
-void Media::Init(v8::Local<v8::Object> exports, libvlc_instance_t* vlc) {
-  auto data = Nan::New<v8::External>(static_cast<void*>(vlc));
-  auto tpl = Nan::New<v8::FunctionTemplate>(New, data);
+v8::Local<v8::Function> Media::Init() {
+  auto tpl = Nan::New<v8::FunctionTemplate>(New);
   tpl->SetClassName(Nan::New("VlcMedia").ToLocalChecked());
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("mrl").ToLocalChecked(), MrlGetter);
-  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("duration").ToLocalChecked(), DurationGetter);
+  auto inst = tpl->InstanceTemplate();
+  Nan::SetAccessor(inst, Nan::New("mrl").ToLocalChecked(), MrlGetter);
+  Nan::SetAccessor(inst, Nan::New("duration").ToLocalChecked(), DurationGetter);
 
-  constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
-  Nan::Set(exports, Nan::New("VlcMedia").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
+  constructor.Reset(tpl->GetFunction());
+  return tpl->GetFunction();
 }
 
 
 NAN_METHOD(Media::New) {
-  auto vlc = static_cast<libvlc_instance_t*>(info.Data().As<v8::External>()->Value());
-
   if (info.Length() < 1) {
     Nan::ThrowTypeError("Wrong number of arguments");
     return;
@@ -32,7 +31,7 @@ NAN_METHOD(Media::New) {
   Nan::Utf8String mrl(info[0]->ToString());
 
   if (info.IsConstructCall()) {
-    auto obj = new Media(vlc, *mrl);
+    auto obj = new Media(GetVlc(), *mrl);
     obj->Wrap(info.This());
     info.GetReturnValue().Set(info.This());
   } else {

@@ -4,6 +4,7 @@
     "cflags_cc!": ["-fno-rtti"],
     "sources": [
       "src/addon.cc",
+      "src/core.cc",
       "src/media.cc",
       "src/media-player.cc",
       "src/event-manager.cc",

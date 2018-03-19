@@ -1,13 +1,13 @@
-#include "util.h"
+#include "core.h"
 #include "media.h"
 #include "media-player.h"
+#include "util.h"
 
 static Nan::Persistent<v8::Function> constructor;
 
 
-void MediaPlayer::Init(v8::Local<v8::Object> exports, libvlc_instance_t* vlc) {
-  auto data = Nan::New<v8::External>(static_cast<void*>(vlc));
-  auto tpl = Nan::New<v8::FunctionTemplate>(New, data);
+v8::Local<v8::Function> MediaPlayer::Init() {
+  auto tpl = Nan::New<v8::FunctionTemplate>(New);
   tpl->SetClassName(Nan::New("VlcMediaPlayer").ToLocalChecked());
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
@@ -16,22 +16,21 @@ void MediaPlayer::Init(v8::Local<v8::Object> exports, libvlc_instance_t* vlc) {
   Nan::SetPrototypeMethod(tpl, "stop", Stop);
   Nan::SetPrototypeMethod(tpl, "close", Close);
 
-  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("media").ToLocalChecked(), MediaGetter, MediaSetter);
-  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("length").ToLocalChecked(), LengthGetter);
-  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("time").ToLocalChecked(), TimeGetter, TimeSetter);
-  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("position").ToLocalChecked(), PositionGetter, PositionSetter);
-  Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("state").ToLocalChecked(), StateGetter);
+  auto inst = tpl->InstanceTemplate();
+  Nan::SetAccessor(inst, Nan::New("media").ToLocalChecked(), MediaGetter, MediaSetter);
+  Nan::SetAccessor(inst, Nan::New("length").ToLocalChecked(), LengthGetter);
+  Nan::SetAccessor(inst, Nan::New("time").ToLocalChecked(), TimeGetter, TimeSetter);
+  Nan::SetAccessor(inst, Nan::New("position").ToLocalChecked(), PositionGetter, PositionSetter);
+  Nan::SetAccessor(inst, Nan::New("state").ToLocalChecked(), StateGetter);
 
-  constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
-  Nan::Set(exports, Nan::New("VlcMediaPlayer").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
+  constructor.Reset(tpl->GetFunction());
+  return tpl->GetFunction();
 }
 
 
 NAN_METHOD(MediaPlayer::New) {
-  auto vlc = static_cast<libvlc_instance_t*>(info.Data().As<v8::External>()->Value());
-
   if (info.IsConstructCall()) {
-    auto self = new MediaPlayer(vlc);
+    auto self = new MediaPlayer(GetVlc());
     self->Wrap(info.This());
 
     if (info.Length() > 0) {

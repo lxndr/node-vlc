@@ -6,7 +6,7 @@
 
 class Media : public Nan::ObjectWrap {
 public:
-  static void Init(v8::Local<v8::Object> exports, libvlc_instance_t* vlc);
+  static v8::Local<v8::Function> Init();
 
   inline libvlc_media_t* GetVlcMedia() const
     {return m_vlc_media;}

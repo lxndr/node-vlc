@@ -1,11 +1,16 @@
+#include "core.h"
 #include "media.h"
 #include "media-player.h"
 
-NAN_MODULE_INIT(Init) {
-  libvlc_instance_t* vlc = libvlc_new(0, NULL);
+void ExportClass(v8::Local<v8::Object>& target, const char* name, v8::Local<v8::Function> constructor) {
+  Nan::Set(target, Nan::New(name).ToLocalChecked(), constructor);
+}
 
-  Media::Init(target, vlc);
-  MediaPlayer::Init(target, vlc);
+NAN_MODULE_INIT(Init) {
+  NewVlc();
+
+  ExportClass(target, "VlcMedia", Media::Init());
+  ExportClass(target, "VlcMediaPlayer", MediaPlayer::Init());
 }
 
 NODE_MODULE(addon, Init)

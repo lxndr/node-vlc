@@ -7,7 +7,7 @@
 
 class MediaPlayer : public EventManager {
 public:
-  static void Init(v8::Local<v8::Object> exports, libvlc_instance_t* vlc);
+  static v8::Local<v8::Function> Init();
   void SetMedia(v8::Local<v8::Object> media);
 
 private:
