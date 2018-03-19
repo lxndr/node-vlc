@@ -12,7 +12,7 @@ public:
   virtual ~EventManager();
 
   void SetupEventCallbacks(libvlc_event_manager_t* em);
-  void Emit(const std::string& name, const v8::Local<v8::Value>& arg);
+  void Emit(const std::string& name, v8::Local<v8::Value> arg);
   void Destroy();
 
 private:

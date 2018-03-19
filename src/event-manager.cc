@@ -42,18 +42,14 @@ void EventManager::SetupEventCallbacks(libvlc_event_manager_t* em) {
     libvlc_event_attach(em, desc.type, reinterpret_cast<libvlc_callback_t>(event_cb), this);
 }
 
-void EventManager::Emit(const std::string& name, const v8::Local<v8::Value>& arg) {
+void EventManager::Emit(const std::string& name, v8::Local<v8::Value> arg) {
   auto fn = v8::Local<v8::Function>::Cast(
     handle()->Get(Nan::New("emit").ToLocalChecked())
   );
 
-  if (arg->IsUndefined()) {
-    v8::Local<v8::Value> args[] = {Nan::New(name).ToLocalChecked()};
-    Nan::Call(fn, handle(), 1, args);
-  } else {
-    v8::Local<v8::Value> args[] = {Nan::New(name).ToLocalChecked(), arg};
-    Nan::Call(fn, handle(), 2, args);
-  }
+  v8::Local<v8::Value> argv[] = {Nan::New(name).ToLocalChecked(), arg};
+  int argc = arg->IsUndefined() ? 1 : 2;
+  Nan::Call(fn, handle(), argc, argv);
 }
 
 void EventManager::Destroy() {
