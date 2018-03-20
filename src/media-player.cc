@@ -1,6 +1,12 @@
-#include "core.h"
-#include "media.h"
-#include "media-player.h"
+/*
+ * Copyright 2018 Humanity
+ */
+
+#include <vector>
+#include <string>
+#include "core.hpp"
+#include "media.hpp"
+#include "media-player.hpp"
 
 static Nan::Persistent<v8::Function> constructor;
 static const std::vector<std::string> availableEvents = {

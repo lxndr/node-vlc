@@ -1,4 +1,8 @@
-#include "event.h"
+/*
+ * Copyright 2018 Humanity
+ */
+
+#include "event.hpp"
 
 Event* Event::create(const libvlc_event_t* event) {
   return new Event();

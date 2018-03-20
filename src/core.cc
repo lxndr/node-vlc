@@ -1,4 +1,8 @@
-#include "core.h"
+/*
+ * Copyright 2018 Humanity
+ */
+
+#include "core.hpp"
 
 static libvlc_instance_t* vlc = nullptr;
 

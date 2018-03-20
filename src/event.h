@@ -1,7 +1,13 @@
-#pragma once
+/*
+ * Copyright 2018 Humanity
+ */
+
+#ifndef SRC_EVENT_H_
+#define SRC_EVENT_H_
 
 #include <nan.h>
 #include <vlc/vlc.h>
+#include <string>
 
 struct Event {
   std::string name;
@@ -37,3 +43,5 @@ struct MetaChangeEvent : Event {
   static Event* create(const libvlc_event_t* event);
   v8::Local<v8::Value> value() const override;
 };
+
+#endif  // SRC_EVENT_H_

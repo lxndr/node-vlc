@@ -1,24 +1,34 @@
-#pragma once
+/*
+ * Copyright 2018 Humanity
+ */
 
-#include <map>
-#include <mutex>
+#ifndef SRC_OBJECT_H_
+#define SRC_OBJECT_H_
+
 #include <uv.h>
 #include <nan.h>
+#include <map>
+#include <mutex>
+#include <memory>
+#include <string>
+#include <vector>
+#include <deque>
 
 struct Event;
 
 class Object : public Nan::ObjectWrap {
-public:
-  static void Init(v8::Local<v8::FunctionTemplate> tpl, const std::vector<std::string>& availableEvents);
+ public:
+  static void Init(v8::Local<v8::FunctionTemplate> tpl,
+    const std::vector<std::string>& availableEvents);
 
-protected:
-  Object(const std::vector<std::string>& availableEvents);
+ protected:
+  explicit Object(const std::vector<std::string>& availableEvents);
   virtual ~Object();
   virtual libvlc_event_manager_t* GetEventManager() const = 0;
   virtual void OnClose() = 0;
   inline bool IsClosed() {return m_closed;}
 
-private:
+ private:
   static void event_cb(const libvlc_event_t* p_event, Object* self);
   static void async_cb(uv_async_t* handle);
 
@@ -35,3 +45,5 @@ private:
   std::deque<std::unique_ptr<Event>> m_events;
   std::map<std::string, Nan::Callback> m_callbacks;
 };
+
+#endif  // SRC_OBJECT_H_

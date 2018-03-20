@@ -1,5 +1,9 @@
-#include "event.h"
-#include "object.h"
+/*
+ * Copyright 2018 Humanity
+ */
+
+#include "event.hpp"
+#include "object.hpp"
 
 typedef Event* (*CreateEventFn) (const libvlc_event_t* event);
 
@@ -16,30 +20,30 @@ struct EventDesc {
 };
 
 static std::vector<EventDesc> eventMap = {
-  {libvlc_MediaMetaChanged,            "onmeta",     MetaChangeEvent::create     },
+  {libvlc_MediaMetaChanged,            "onmeta",     MetaChangeEvent::create    },
 
-  {libvlc_MediaPlayerOpening,          "onopen",     Event::create               },
-  {libvlc_MediaPlayerBuffering,        "onbuffer",   BufferEvent::create         },
-  {libvlc_MediaPlayerPlaying,          "onplay",     Event::create               },
-  {libvlc_MediaPlayerPaused,           "onpause",    Event::create               },
-  {libvlc_MediaPlayerStopped,          "onstop",     Event::create               },
+  {libvlc_MediaPlayerOpening,          "onopen",     Event::create              },
+  {libvlc_MediaPlayerBuffering,        "onbuffer",   BufferEvent::create        },
+  {libvlc_MediaPlayerPlaying,          "onplay",     Event::create              },
+  {libvlc_MediaPlayerPaused,           "onpause",    Event::create              },
+  {libvlc_MediaPlayerStopped,          "onstop",     Event::create              },
 
-  {libvlc_MediaPlayerTimeChanged,      "ontime",     TimeChangeEvent::create     },
-  {libvlc_MediaPlayerPositionChanged,  "onposition", PositionChangeEvent::create },
-  {libvlc_MediaPlayerEndReached,       "onend",      Event::create               },
-  {libvlc_MediaPlayerEncounteredError, "onerror",    Event::create               },
+  {libvlc_MediaPlayerTimeChanged,      "ontime",     TimeChangeEvent::create    },
+  {libvlc_MediaPlayerPositionChanged,  "onposition", PositionChangeEvent::create},
+  {libvlc_MediaPlayerEndReached,       "onend",      Event::create              },
+  {libvlc_MediaPlayerEncounteredError, "onerror",    Event::create              },
 };
 
 void Object::Init(v8::Local<v8::FunctionTemplate> tpl, const std::vector<std::string>& availableEvents) {
   Nan::SetPrototypeMethod(tpl, "close", Close);
 
   auto inst = tpl->InstanceTemplate();
-  for (auto& name: availableEvents)
+  for (auto& name : availableEvents)
     Nan::SetAccessor(inst, Nan::New(name).ToLocalChecked(), CallbackGetter, CallbackSetter);
 }
 
 Object::Object(const std::vector<std::string>& availableEvents) : m_closed(false) {
-  for (auto& name: availableEvents)
+  for (auto& name : availableEvents)
     m_callbacks.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple());
 
   uv_async_init(uv_default_loop(), &m_async, async_cb);
@@ -112,10 +116,10 @@ NAN_SETTER(Object::CallbackSetter) {
   if (value->IsFunction()) {
     auto fn = value.As<v8::Function>();
     self->m_callbacks[*name].Reset(fn);
-    libvlc_event_attach(em, idesc->type, reinterpret_cast<libvlc_callback_t>(event_cb), self);
+    libvlc_event_attach(em, idesc->type, (libvlc_callback_t) event_cb, self);
   } else if (value->IsNullOrUndefined()) {
     self->m_callbacks[*name].Reset();
-    libvlc_event_detach(em, idesc->type, reinterpret_cast<libvlc_callback_t>(event_cb), self);
+    libvlc_event_detach(em, idesc->type, (libvlc_callback_t) event_cb, self);
   } else {
     Nan::ThrowTypeError("Callback must be a function");
   }

@@ -1,16 +1,21 @@
-#pragma once
+/*
+ * Copyright 2018 Humanity
+ */
+
+#ifndef SRC_MEDIA_PLAYER_H_
+#define SRC_MEDIA_PLAYER_H_
 
 #include <uv.h>
 #include <nan.h>
 #include <vlc/vlc.h>
-#include "object.h"
+#include "object.hpp"
 
 class MediaPlayer : public Object {
-public:
+ public:
   static v8::Local<v8::Function> Init();
   void SetMedia(v8::Local<v8::Object> media);
 
-private:
+ private:
   explicit MediaPlayer(libvlc_instance_t* vlc);
   libvlc_event_manager_t* GetEventManager() const override;
   void OnClose() override;
@@ -29,7 +34,9 @@ private:
   static NAN_SETTER(PositionSetter);
   static NAN_GETTER(StateGetter);
 
-private:
+ private:
   libvlc_media_player_t* m_vlc_player;
   Nan::Persistent<v8::Object> m_media;
 };
+
+#endif  // SRC_MEDIA_PLAYER_H_
