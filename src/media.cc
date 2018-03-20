@@ -4,8 +4,8 @@
 
 #include <vector>
 #include <string>
-#include "core.hpp"
-#include "media.hpp"
+#include "core.h"
+#include "media.h"
 
 static Nan::Persistent<v8::Function> constructor;
 static const std::vector<std::string> availableEvents = {

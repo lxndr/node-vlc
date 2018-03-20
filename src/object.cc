@@ -2,8 +2,8 @@
  * Copyright 2018 Humanity
  */
 
-#include "event.hpp"
-#include "object.hpp"
+#include "event.h"
+#include "object.h"
 
 typedef Event* (*CreateEventFn) (const libvlc_event_t* event);
 

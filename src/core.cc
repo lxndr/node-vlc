@@ -2,7 +2,7 @@
  * Copyright 2018 Humanity
  */
 
-#include "core.hpp"
+#include "core.h"
 
 static libvlc_instance_t* vlc = nullptr;
 

@@ -8,7 +8,7 @@
 #include <uv.h>
 #include <nan.h>
 #include <vlc/vlc.h>
-#include "object.hpp"
+#include "object.h"
 
 class Media : public Object {
  public:
