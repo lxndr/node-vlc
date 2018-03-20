@@ -7,24 +7,27 @@
 
 struct Event;
 
-class EventManager : public Nan::ObjectWrap {
+class Object : public Nan::ObjectWrap {
 public:
   static void Init(v8::Local<v8::FunctionTemplate> tpl, const std::vector<std::string>& availableEvents);
 
-  EventManager(const std::vector<std::string>& availableEvents);
-  virtual ~EventManager();
-  virtual void Close();
-
 protected:
-  virtual libvlc_event_manager_t* GetVlcEventManager() const = 0;
-  void Emit(const std::string& name, v8::Local<v8::Value> arg);
+  Object(const std::vector<std::string>& availableEvents);
+  virtual ~Object();
+  virtual libvlc_event_manager_t* GetEventManager() const = 0;
+  virtual void OnClose() = 0;
+  inline bool IsClosed() {return m_closed;}
 
 private:
-  static void event_cb(const libvlc_event_t* p_event, EventManager* self);
+  static void event_cb(const libvlc_event_t* p_event, Object* self);
   static void async_cb(uv_async_t* handle);
 
+  static NAN_METHOD(Close);
   static NAN_GETTER(CallbackGetter);
   static NAN_SETTER(CallbackSetter);
+
+  void Emit(const std::string& name, v8::Local<v8::Value> arg);
+  void Close();
 
   bool m_closed;
   uv_async_t m_async;

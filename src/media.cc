@@ -12,14 +12,13 @@ v8::Local<v8::Function> Media::Init() {
   tpl->SetClassName(Nan::New("VlcMedia").ToLocalChecked());
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-  Nan::SetPrototypeMethod(tpl, "close", Close);
   Nan::SetPrototypeMethod(tpl, "getMeta", GetMeta);
 
   auto inst = tpl->InstanceTemplate();
   Nan::SetAccessor(inst, Nan::New("mrl").ToLocalChecked(), MrlGetter);
   Nan::SetAccessor(inst, Nan::New("duration").ToLocalChecked(), DurationGetter);
 
-  EventManager::Init(tpl, availableEvents);
+  Object::Init(tpl, availableEvents);
 
   constructor.Reset(tpl->GetFunction());
   return tpl->GetFunction();
@@ -49,22 +48,16 @@ NAN_METHOD(Media::New) {
 }
 
 
-Media::Media(libvlc_instance_t* vlc, const char* mrl) : EventManager(availableEvents) {
+Media::Media(libvlc_instance_t* vlc, const char* mrl) : Object(availableEvents) {
   m_vlc_media = libvlc_media_new_location(vlc, mrl);
 }
 
-libvlc_event_manager_t* Media::GetVlcEventManager() const {
+libvlc_event_manager_t* Media::GetEventManager() const {
   return libvlc_media_event_manager(m_vlc_media);
 }
 
-void Media::Close() {
-  EventManager::Close();
+void Media::OnClose() {
   libvlc_media_release(m_vlc_media);
-}
-
-NAN_METHOD(Media::Close) {
-  auto self = Nan::ObjectWrap::Unwrap<Media>(info.Holder());
-  self->Close();
 }
 
 NAN_METHOD(Media::GetMeta) {

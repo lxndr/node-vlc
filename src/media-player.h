@@ -3,23 +3,22 @@
 #include <uv.h>
 #include <nan.h>
 #include <vlc/vlc.h>
-#include "event-manager.h"
+#include "object.h"
 
-class MediaPlayer : public EventManager {
+class MediaPlayer : public Object {
 public:
   static v8::Local<v8::Function> Init();
   void SetMedia(v8::Local<v8::Object> media);
-  void Close() override;
 
 private:
   explicit MediaPlayer(libvlc_instance_t* vlc);
-  libvlc_event_manager_t* GetVlcEventManager() const override;
+  libvlc_event_manager_t* GetEventManager() const override;
+  void OnClose() override;
 
   static NAN_METHOD(New);
   static NAN_METHOD(Play);
   static NAN_METHOD(Pause);
   static NAN_METHOD(Stop);
-  static NAN_METHOD(Close);
 
   static NAN_GETTER(MediaGetter);
   static NAN_SETTER(MediaSetter);

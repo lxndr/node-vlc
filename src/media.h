@@ -3,19 +3,19 @@
 #include <uv.h>
 #include <nan.h>
 #include <vlc/vlc.h>
-#include "event-manager.h"
+#include "object.h"
 
-class Media : public EventManager {
+class Media : public Object {
 public:
   static v8::Local<v8::Function> Init();
-  void Close() override;
 
   inline libvlc_media_t* GetVlcMedia() const
     {return m_vlc_media;}
 
 private:
   explicit Media(libvlc_instance_t* vlc, const char* mrl);
-  libvlc_event_manager_t* GetVlcEventManager() const override;
+  libvlc_event_manager_t* GetEventManager() const override;
+  void OnClose() override;
 
   static NAN_METHOD(New);
   static NAN_METHOD(Close);

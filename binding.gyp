@@ -5,9 +5,9 @@
     "sources": [
       "src/addon.cc",
       "src/core.cc",
+      "src/object.cc",
       "src/media.cc",
       "src/media-player.cc",
-      "src/event-manager.cc",
       "src/event.cc"
     ],
     "libraries": [

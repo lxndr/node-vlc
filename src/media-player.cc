@@ -17,7 +17,6 @@ v8::Local<v8::Function> MediaPlayer::Init() {
   Nan::SetPrototypeMethod(tpl, "play", Play);
   Nan::SetPrototypeMethod(tpl, "pause", Pause);
   Nan::SetPrototypeMethod(tpl, "stop", Stop);
-  Nan::SetPrototypeMethod(tpl, "close", Close);
 
   auto inst = tpl->InstanceTemplate();
   Nan::SetAccessor(inst, Nan::New("media").ToLocalChecked(), MediaGetter, MediaSetter);
@@ -26,7 +25,7 @@ v8::Local<v8::Function> MediaPlayer::Init() {
   Nan::SetAccessor(inst, Nan::New("position").ToLocalChecked(), PositionGetter, PositionSetter);
   Nan::SetAccessor(inst, Nan::New("state").ToLocalChecked(), StateGetter);
 
-  EventManager::Init(tpl, availableEvents);
+  Object::Init(tpl, availableEvents);
 
   constructor.Reset(tpl->GetFunction());
   return tpl->GetFunction();
@@ -50,16 +49,15 @@ NAN_METHOD(MediaPlayer::New) {
 }
 
 
-MediaPlayer::MediaPlayer(libvlc_instance_t* vlc) : EventManager(availableEvents) {
+MediaPlayer::MediaPlayer(libvlc_instance_t* vlc) : Object(availableEvents) {
   m_vlc_player = libvlc_media_player_new(vlc);
 }
 
-libvlc_event_manager_t* MediaPlayer::GetVlcEventManager() const {
+libvlc_event_manager_t* MediaPlayer::GetEventManager() const {
   return libvlc_media_player_event_manager(m_vlc_player);
 }
 
-void MediaPlayer::Close() {
-  EventManager::Close();
+void MediaPlayer::OnClose() {
   libvlc_media_player_stop(m_vlc_player);
   libvlc_media_player_release(m_vlc_player);
 }
@@ -84,11 +82,6 @@ NAN_METHOD(MediaPlayer::Pause) {
 NAN_METHOD(MediaPlayer::Stop) {
   auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
   libvlc_media_player_stop(self->m_vlc_player);
-}
-
-NAN_METHOD(MediaPlayer::Close) {
-  auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
-  self->Close();
 }
 
 

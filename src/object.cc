@@ -1,5 +1,5 @@
 #include "event.h"
-#include "event-manager.h"
+#include "object.h"
 
 typedef Event* (*CreateEventFn) (const libvlc_event_t* event);
 
@@ -30,14 +30,15 @@ static std::vector<EventDesc> eventMap = {
   {libvlc_MediaPlayerEncounteredError, "onerror",    Event::create               },
 };
 
-void EventManager::Init(v8::Local<v8::FunctionTemplate> tpl, const std::vector<std::string>& availableEvents) {
-  auto inst = tpl->InstanceTemplate();
+void Object::Init(v8::Local<v8::FunctionTemplate> tpl, const std::vector<std::string>& availableEvents) {
+  Nan::SetPrototypeMethod(tpl, "close", Close);
 
+  auto inst = tpl->InstanceTemplate();
   for (auto& name: availableEvents)
     Nan::SetAccessor(inst, Nan::New(name).ToLocalChecked(), CallbackGetter, CallbackSetter);
 }
 
-EventManager::EventManager(const std::vector<std::string>& availableEvents) : m_closed(false) {
+Object::Object(const std::vector<std::string>& availableEvents) : m_closed(false) {
   for (auto& name: availableEvents)
     m_callbacks.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple());
 
@@ -45,25 +46,27 @@ EventManager::EventManager(const std::vector<std::string>& availableEvents) : m_
   m_async.data = this;
 }
 
-EventManager::~EventManager() {
+Object::~Object() {
   Close();
 }
 
-void EventManager::Emit(const std::string& name, v8::Local<v8::Value> arg) {
+void Object::Emit(const std::string& name, v8::Local<v8::Value> arg) {
   v8::Local<v8::Value> argv[] = {arg};
   int argc = arg->IsUndefined() ? 0 : 1;
   Nan::Call(m_callbacks[name], handle(), argc, argv);
 }
 
-void EventManager::Close() {
+void Object::Close() {
   if (m_closed)
     return;
 
   m_closed = true;
   uv_close(reinterpret_cast<uv_handle_t*>(&m_async), nullptr);
+
+  OnClose();
 }
 
-void EventManager::event_cb(const libvlc_event_t* p_event, EventManager* self) {
+void Object::event_cb(const libvlc_event_t* p_event, Object* self) {
   auto type = p_event->type;
 
   auto it = std::find(eventMap.begin(), eventMap.end(), type);
@@ -77,8 +80,8 @@ void EventManager::event_cb(const libvlc_event_t* p_event, EventManager* self) {
   uv_async_send(&self->m_async);
 }
 
-void EventManager::async_cb(uv_async_t* handle) {
-  auto self = reinterpret_cast<EventManager*>(handle->data);
+void Object::async_cb(uv_async_t* handle) {
+  auto self = reinterpret_cast<Object*>(handle->data);
   Nan::HandleScope scope;
 
   self->m_mutex.lock();
@@ -88,17 +91,22 @@ void EventManager::async_cb(uv_async_t* handle) {
   self->m_mutex.unlock();
 }
 
-NAN_GETTER(EventManager::CallbackGetter) {
+NAN_METHOD(Object::Close) {
+  auto self = Nan::ObjectWrap::Unwrap<Object>(info.Holder());
+  self->Close();
+}
+
+NAN_GETTER(Object::CallbackGetter) {
   Nan::Utf8String name(property);
-  auto self = Nan::ObjectWrap::Unwrap<EventManager>(info.Holder());
+  auto self = Nan::ObjectWrap::Unwrap<Object>(info.Holder());
   auto fn = self->m_callbacks[*name].GetFunction();
   info.GetReturnValue().Set(fn);
 }
 
-NAN_SETTER(EventManager::CallbackSetter) {
+NAN_SETTER(Object::CallbackSetter) {
   Nan::Utf8String name(property);
-  auto self = Nan::ObjectWrap::Unwrap<EventManager>(info.Holder());
-  auto em = self->GetVlcEventManager();
+  auto self = Nan::ObjectWrap::Unwrap<Object>(info.Holder());
+  auto em = self->GetEventManager();
   auto idesc = std::find(eventMap.begin(), eventMap.end(), *name);
 
   if (value->IsFunction()) {
