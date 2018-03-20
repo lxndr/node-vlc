@@ -14,7 +14,7 @@ class Media : public Object {
  public:
   static v8::Local<v8::Function> Init();
 
-  inline libvlc_media_t* GetVlcMedia() const
+  inline libvlc_media_t* VlcHandle() const
     {return m_vlc_media;}
 
  private:

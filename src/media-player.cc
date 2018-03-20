@@ -70,8 +70,13 @@ void MediaPlayer::OnClose() {
 
 void MediaPlayer::SetMedia(v8::Local<v8::Object> object) {
   m_media.Reset(object);
-  auto _media = Nan::ObjectWrap::Unwrap<Media>(object);
-  libvlc_media_player_set_media(m_vlc_player, _media->GetVlcMedia());
+
+  if (object.IsEmpty() || object->IsNullOrUndefined()) {
+    libvlc_media_player_set_media(m_vlc_player, nullptr);
+  } else {
+    auto _media = Nan::ObjectWrap::Unwrap<Media>(object);
+    libvlc_media_player_set_media(m_vlc_player, _media->VlcHandle());
+  }
 }
 
 

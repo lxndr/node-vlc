@@ -36,6 +36,7 @@ class Object : public Nan::ObjectWrap {
   static NAN_GETTER(CallbackGetter);
   static NAN_SETTER(CallbackSetter);
 
+  void ResetCallback(const std::string& name, v8::Local<v8::Value> fn = v8::Local<v8::Value>());
   void Emit(const std::string& name, v8::Local<v8::Value> arg);
   void Close();
 

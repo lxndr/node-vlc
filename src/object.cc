@@ -15,7 +15,7 @@ struct EventDesc {
   bool operator==(int val)
     {return type == val;}
 
-  bool operator==(const char* val)
+  bool operator==(const std::string& val)
     {return name == val;}
 };
 
@@ -54,6 +54,26 @@ Object::~Object() {
   Close();
 }
 
+void Object::ResetCallback(const std::string& name, v8::Local<v8::Value> fn) {
+  auto em = GetEventManager();
+  auto& cb = m_callbacks[name];
+  auto attached = !cb.IsEmpty();
+  auto idesc = std::find(eventMap.begin(), eventMap.end(), name);
+  auto type = idesc->type;
+
+  if (fn.IsEmpty() || fn->IsNullOrUndefined()) {
+    if (attached)
+      libvlc_event_detach(em, type, (libvlc_callback_t) event_cb, this);
+    cb.Reset();
+  } else if (fn->IsFunction()) {
+    if (!attached)
+      libvlc_event_attach(em, type, (libvlc_callback_t) event_cb, this);
+    cb.Reset(fn.As<v8::Function>());
+  } else {
+    Nan::ThrowTypeError("Callback must be a function");
+  }
+}
+
 void Object::Emit(const std::string& name, v8::Local<v8::Value> arg) {
   v8::Local<v8::Value> argv[] = {arg};
   int argc = arg->IsUndefined() ? 0 : 1;
@@ -66,6 +86,10 @@ void Object::Close() {
 
   m_closed = true;
   uv_close(reinterpret_cast<uv_handle_t*>(&m_async), nullptr);
+  m_events.clear();
+
+  for (auto& pair : m_callbacks)
+    ResetCallback(pair.first);
 
   OnClose();
 }
@@ -108,20 +132,11 @@ NAN_GETTER(Object::CallbackGetter) {
 }
 
 NAN_SETTER(Object::CallbackSetter) {
-  Nan::Utf8String name(property);
   auto self = Nan::ObjectWrap::Unwrap<Object>(info.Holder());
-  auto em = self->GetEventManager();
-  auto idesc = std::find(eventMap.begin(), eventMap.end(), *name);
 
-  if (value->IsFunction()) {
-    auto fn = value.As<v8::Function>();
-    self->m_callbacks[*name].Reset(fn);
-    libvlc_event_attach(em, idesc->type, (libvlc_callback_t) event_cb, self);
-  } else if (value->IsNullOrUndefined()) {
-    self->m_callbacks[*name].Reset();
-    libvlc_event_detach(em, idesc->type, (libvlc_callback_t) event_cb, self);
-  } else {
-    Nan::ThrowTypeError("Callback must be a function");
+  if (!self->m_closed) {
+    Nan::Utf8String name(property);
+    self->ResetCallback(*name, value);
   }
 
   info.GetReturnValue().Set(true);
