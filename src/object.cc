@@ -21,6 +21,7 @@ struct EventDesc {
 
 static std::vector<EventDesc> eventMap = {
   {libvlc_MediaMetaChanged,            "onmeta",     MetaChangeEvent::create    },
+  {libvlc_MediaDurationChanged,        "onduration", DurationChangeEvent::create},
 
   {libvlc_MediaPlayerOpening,          "onopen",     Event::create              },
   {libvlc_MediaPlayerBuffering,        "onbuffer",   BufferEvent::create        },

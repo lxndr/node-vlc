@@ -44,4 +44,11 @@ struct MetaChangeEvent : Event {
   v8::Local<v8::Value> value() const override;
 };
 
+struct DurationChangeEvent : Event {
+  int64_t duration;
+
+  static Event* create(const libvlc_event_t* event);
+  v8::Local<v8::Value> value() const override;
+};
+
 #endif  // SRC_EVENT_H_

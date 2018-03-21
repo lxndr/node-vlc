@@ -29,7 +29,7 @@ Event* TimeChangeEvent::create(const libvlc_event_t* event) {
 }
 
 v8::Local<v8::Value> TimeChangeEvent::value() const {
-  return Nan::New(static_cast<int32_t>(time));
+  return Nan::New((double) time);
 }
 
 Event* PositionChangeEvent::create(const libvlc_event_t* event) {
@@ -50,4 +50,14 @@ Event* MetaChangeEvent::create(const libvlc_event_t* event) {
 
 v8::Local<v8::Value> MetaChangeEvent::value() const {
   return Nan::New(type);
+}
+
+Event* DurationChangeEvent::create(const libvlc_event_t* event) {
+  auto r = new DurationChangeEvent();
+  r->duration = event->u.media_duration_changed.new_duration;
+  return r;
+}
+
+v8::Local<v8::Value> DurationChangeEvent::value() const {
+  return Nan::New((double) duration);
 }
