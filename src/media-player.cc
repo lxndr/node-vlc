@@ -94,6 +94,15 @@ NAN_METHOD(MediaPlayer::Pause) {
 
 NAN_METHOD(MediaPlayer::Stop) {
   auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
+
+  /*
+   * NOTE: libvlc definitely freezes calling libvlc_media_player_stop
+   * when current state is libvlc_Ended
+   */
+  auto state = libvlc_media_player_get_state(self->m_vlc_player);
+  if (state == libvlc_Stopped || state == libvlc_Ended)
+    return;
+
   libvlc_media_player_stop(self->m_vlc_player);
 }
 
