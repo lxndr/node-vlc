@@ -105,7 +105,7 @@ NAN_GETTER(MediaPlayer::MediaGetter) {
 
 NAN_SETTER(MediaPlayer::MediaSetter) {
   auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
-  self->SetMedia(value->ToObject());
+  self->SetMedia(value);
   info.GetReturnValue().Set(true);
 }
 
