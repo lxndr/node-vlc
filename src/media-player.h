@@ -13,7 +13,7 @@
 class MediaPlayer : public Object {
  public:
   static v8::Local<v8::Function> Init();
-  void SetMedia(v8::Local<v8::Object> media);
+  void SetMedia(v8::Local<v8::Value> value);
 
  private:
   explicit MediaPlayer(libvlc_instance_t* vlc);
@@ -36,7 +36,7 @@ class MediaPlayer : public Object {
 
  private:
   libvlc_media_player_t* m_vlc_player;
-  Nan::Persistent<v8::Object> m_media;
+  Nan::Persistent<v8::Value> m_media;
 };
 
 #endif  // SRC_MEDIA_PLAYER_H_

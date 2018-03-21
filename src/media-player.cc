@@ -68,14 +68,16 @@ void MediaPlayer::OnClose() {
   libvlc_media_player_release(m_vlc_player);
 }
 
-void MediaPlayer::SetMedia(v8::Local<v8::Object> object) {
-  m_media.Reset(object);
-
-  if (object.IsEmpty() || object->IsNullOrUndefined()) {
+void MediaPlayer::SetMedia(v8::Local<v8::Value> value) {
+  if (value.IsEmpty() || value->IsNullOrUndefined()) {
     libvlc_media_player_set_media(m_vlc_player, nullptr);
+    m_media.Reset();
+  } else if (value->IsObject()) {
+    auto media = Nan::ObjectWrap::Unwrap<Media>(value->ToObject());
+    libvlc_media_player_set_media(m_vlc_player, media->VlcHandle());
+    m_media.Reset(value);
   } else {
-    auto _media = Nan::ObjectWrap::Unwrap<Media>(object);
-    libvlc_media_player_set_media(m_vlc_player, _media->VlcHandle());
+    Nan::ThrowTypeError("Argument must be a VlcMedia");
   }
 }
 
