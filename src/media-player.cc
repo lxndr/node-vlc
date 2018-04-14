@@ -132,7 +132,8 @@ NAN_GETTER(MediaPlayer::TimeGetter) {
 
 NAN_SETTER(MediaPlayer::TimeSetter) {
   auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
-  libvlc_media_player_set_time(self->m_vlc_player, value->IntegerValue());
+  auto time = static_cast<libvlc_time_t>(value->IntegerValue());
+  libvlc_media_player_set_time(self->m_vlc_player, time);
   info.GetReturnValue().Set(true);
 }
 
@@ -144,7 +145,7 @@ NAN_GETTER(MediaPlayer::PositionGetter) {
 
 NAN_SETTER(MediaPlayer::PositionSetter) {
   auto self = Nan::ObjectWrap::Unwrap<MediaPlayer>(info.Holder());
-  auto pos = value->IntegerValue();
+  auto pos = static_cast<float>(value->NumberValue());
   libvlc_media_player_set_position(self->m_vlc_player, pos);
   info.GetReturnValue().Set(true);
 }
