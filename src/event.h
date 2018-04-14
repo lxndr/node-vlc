@@ -23,6 +23,13 @@ struct BufferEvent : Event {
   v8::Local<v8::Value> value() const override;
 };
 
+struct LengthChangeEvent : Event {
+  libvlc_time_t length;
+
+  static Event* create(const libvlc_event_t* event);
+  v8::Local<v8::Value> value() const override;
+};
+
 struct TimeChangeEvent : Event {
   libvlc_time_t time;
 

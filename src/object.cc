@@ -29,6 +29,7 @@ static std::vector<EventDesc> eventMap = {
   {libvlc_MediaPlayerPaused,           "onpause",    Event::create              },
   {libvlc_MediaPlayerStopped,          "onstop",     Event::create              },
 
+  {libvlc_MediaPlayerLengthChanged,    "onlength",   LengthChangeEvent::create  },
   {libvlc_MediaPlayerTimeChanged,      "ontime",     TimeChangeEvent::create    },
   {libvlc_MediaPlayerPositionChanged,  "onposition", PositionChangeEvent::create},
   {libvlc_MediaPlayerEndReached,       "onend",      Event::create              },

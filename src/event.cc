@@ -22,6 +22,16 @@ v8::Local<v8::Value> BufferEvent::value() const {
   return Nan::New(cache);
 }
 
+Event* LengthChangeEvent::create(const libvlc_event_t* event) {
+  auto r = new LengthChangeEvent();
+  r->length = event->u.media_player_length_changed.new_length;
+  return r;
+}
+
+v8::Local<v8::Value> LengthChangeEvent::value() const {
+  return Nan::New(static_cast<int32_t>(length));
+}
+
 Event* TimeChangeEvent::create(const libvlc_event_t* event) {
   auto r = new TimeChangeEvent();
   r->time = event->u.media_player_time_changed.new_time;
@@ -29,7 +39,7 @@ Event* TimeChangeEvent::create(const libvlc_event_t* event) {
 }
 
 v8::Local<v8::Value> TimeChangeEvent::value() const {
-  return Nan::New((double) time);
+  return Nan::New(static_cast<int32_t>(time));
 }
 
 Event* PositionChangeEvent::create(const libvlc_event_t* event) {
@@ -59,5 +69,5 @@ Event* DurationChangeEvent::create(const libvlc_event_t* event) {
 }
 
 v8::Local<v8::Value> DurationChangeEvent::value() const {
-  return Nan::New((double) duration);
+  return Nan::New(static_cast<double>(duration));
 }
