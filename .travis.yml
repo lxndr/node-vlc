@@ -1,0 +1,12 @@
+language: node_js
+
+node_js:
+  - 8
+
+addons:
+  apt:
+    update: true
+    packages:
+    - libvlccore-dev
+    - libvlc-dev
+    - vlc-plugin-sdl
