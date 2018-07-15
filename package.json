@@ -3,8 +3,7 @@
   "version": "1.0.0-alpha.3",
   "description": "libvlc binding",
   "scripts": {
-    "install": "build",
-    "build": "node-gyp configure && node-gyp build",
+    "install": "node-gyp configure && node-gyp build",
     "test": "jest",
     "lint": "cpplint src/*"
   },
