@@ -1,28 +1,26 @@
 const path = require('path');
-const {expect} = require('chai');
 const {VlcMedia} = require('..');
 
-const fname = 'file://' + path.resolve('tests/fixtures/bird-whistling.wav');
+const fname = 'file://' + path.resolve('__tests__/fixtures/bird-whistling.wav');
+
+let media = null;
 
 describe('VlcMedia', () => {
-  let media = null;
-
   it('creates new', () => {
     media = new VlcMedia(fname);
   });
 
   it('sets a callback', () => {
     media.onmeta = () => {};
-    media.onmeta = ()  => {}; // set twice
-    expect(typeof media.onmeta === 'function').to.be.true;
+    expect(typeof media.onmeta === 'function').toBe(true);
   });
 
   it('unsets a callback', () => {
     media.onmeta = null;
-    expect(media.onmeta).to.be.undefined;
+    expect(media.onmeta).toBe(undefined);
   });
 
-  after(() => {
+  afterAll(() => {
     media.close();
   });
 });

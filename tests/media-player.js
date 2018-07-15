@@ -1,22 +1,18 @@
 const path = require('path');
-const {expect} = require('chai');
 const {VlcMedia, VlcMediaPlayer} = require('..');
 
-const track1 = 'file://' + path.resolve('tests/fixtures/bird-whistling.wav');
+const track1 = 'file://' + path.resolve('__tests__/fixtures/bird-whistling.wav');
+
+let player = null;
+let media = null;
 
 describe('VlcMediaPlayer', () => {
-  let player = null;
-  let media = null;
-
   it('creates new', () => {
     player = new VlcMediaPlayer();
   });
 
   it('sets media', () => {
-    media = new VlcMedia(track1);
-    player.media = media;
-    player.media = null;
-    player.media = media;
+    player.media = new VlcMedia(track1);
   });
 
   it('plays', done => {
@@ -55,7 +51,7 @@ describe('VlcMediaPlayer', () => {
     player.stop();
   });
 
-  after(() => {
+  afterAll(() => {
     player.media.close();
     player.close();
   });
