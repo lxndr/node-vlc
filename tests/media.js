@@ -1,7 +1,7 @@
 const path = require('path');
 const {VlcMedia} = require('..');
 
-const fname = 'file://' + path.resolve('__tests__/fixtures/bird-whistling.wav');
+const fname = 'file://' + path.resolve(__dirname, 'fixtures/bird-whistling.wav');
 
 let media = null;
 

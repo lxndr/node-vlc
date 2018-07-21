@@ -1,7 +1,7 @@
 const path = require('path');
 const {VlcMedia, VlcMediaPlayer} = require('..');
 
-const track1 = 'file://' + path.resolve('__tests__/fixtures/bird-whistling.wav');
+const track1 = 'file://' + path.resolve(__dirname, 'fixtures/bird-whistling.wav');
 
 let player = null;
 let media = null;
@@ -20,10 +20,6 @@ describe('VlcMediaPlayer', () => {
       done();
     };
 
-    player.onerror = error => {
-      done(error);
-    };
-
     player.play();
   });
 
@@ -32,20 +28,12 @@ describe('VlcMediaPlayer', () => {
       done();
     };
 
-    player.onerror = error => {
-      done(error);
-    };
-
     player.pause();
   });
 
   it('stops', done => {
     player.onstop = () => {
       done();
-    };
-
-    player.onerror = error => {
-      done(error);
     };
 
     player.stop();
